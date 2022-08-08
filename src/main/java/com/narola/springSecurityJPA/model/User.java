@@ -8,6 +8,7 @@ import net.bytebuddy.dynamic.loading.InjectionClassLoader;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
@@ -20,6 +21,7 @@ public class User {
     private int userId;
     private String username;
     private String password;
-    @ManyToMany(fetch=FetchType.EAGER)
-    private Collection<Role> roles=new ArrayList<>();
+    @ManyToMany(cascade={CascadeType.PERSIST,CascadeType.REMOVE},fetch=FetchType.EAGER)
+    @JoinColumn(name="roleId",referencedColumnName = "id")
+    private List<Role> roles=new ArrayList<>();
 }

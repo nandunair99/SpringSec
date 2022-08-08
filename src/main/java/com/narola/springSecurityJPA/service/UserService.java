@@ -1,5 +1,6 @@
 package com.narola.springSecurityJPA.service;
 
+import com.narola.springSecurityJPA.exception.UserNotFoundException;
 import com.narola.springSecurityJPA.model.Role;
 import com.narola.springSecurityJPA.model.User;
 import com.narola.springSecurityJPA.repository.RoleRepository;
@@ -26,7 +27,12 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return null;
+       User user=getUser(username);
+       if(user.equals(null))
+       {
+           throw new UserNotFoundException("User not found");
+       }
+       return new org.springframework.security.core.userdetails.User(user.getUsername(),user.getPassword(), user.getRoles());
     }
 
     public User addUser(User user)
