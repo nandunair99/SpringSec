@@ -1,6 +1,7 @@
 package com.narola.springSecurityJPA;
 
 import com.narola.springSecurityJPA.helper.JwtAuthenticationFilter;
+import com.narola.springSecurityJPA.helper.UserAuthenticationFilter;
 import com.narola.springSecurityJPA.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,9 @@ public class SecurityConfig {
 
     @Autowired
     UserService userDetailService;
+
+//    @Autowired
+//    UserAuthenticationFilter userAuthenticationFilter;
 
     @Autowired
     JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -58,7 +62,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
 
                 )
+
                 .formLogin(withDefaults());
+        AuthenticationManager authenticationManager=http.getSharedObject(AuthenticationManager.class);
+        http.addFilterBefore(new UserAuthenticationFilter(authenticationManager),UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
