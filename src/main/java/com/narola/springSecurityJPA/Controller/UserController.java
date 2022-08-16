@@ -36,14 +36,14 @@ public class UserController {
     @PostMapping(value="/login2")
     public ResponseEntity<JwtResponseDto> generateToken(@RequestBody LoginDto loginDto )
     {
-        try
-        {
-            this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getUsername(),loginDto.getPassword()));
-        }
-        catch(UsernameNotFoundException e)
-        {
-            throw new UserNotFoundException(e.getMessage());
-        }
+//        try
+//        {
+//            this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getUsername(),loginDto.getPassword()));
+//        }
+//        catch(UsernameNotFoundException e)
+//        {
+//            throw new UserNotFoundException(e.getMessage());
+//        }
 
         UserDetails userDetails=this.userService.loadUserByUsername(loginDto.getUsername());
         String token=this.jwtUtil.generateToken(userDetails);
