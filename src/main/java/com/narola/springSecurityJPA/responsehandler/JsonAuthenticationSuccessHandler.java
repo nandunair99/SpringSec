@@ -21,12 +21,16 @@ public class JsonAuthenticationSuccessHandler implements AuthenticationSuccessHa
         this.forwardUrl=url;
     }
     @Override
-    public ResponseEntity<String> onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         Map responseParams=new HashMap<>();
         responseParams.put("status","success");
         responseParams.put("error",null);
         responseParams.put("viewpage",forwardUrl);
         ObjectMapper mapper=new ObjectMapper();
+        onAuthenticationSuccess(request,response,authentication,mapper.writeValueAsString(responseParams));
+    }
 
+    public ResponseEntity<String> onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication,String responseJson) throws IOException, ServletException {
+        return ResponseEntity.ok(responseJson);
     }
 }
