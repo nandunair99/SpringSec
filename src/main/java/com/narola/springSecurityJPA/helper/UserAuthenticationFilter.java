@@ -1,6 +1,7 @@
 package com.narola.springSecurityJPA.helper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.narola.springSecurityJPA.responsehandler.JsonAuthenticationSuccessHandler;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -10,7 +11,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -58,8 +61,14 @@ public class UserAuthenticationFilter extends AbstractAuthenticationProcessingFi
         return this.getAuthenticationManager().authenticate(new UsernamePasswordAuthenticationToken(username, password));
     }
 
+    public JsonAuthenticationSuccessHandler setAuthenticationSuccessUrl(String url)
+    {
+            return new JsonAuthenticationSuccessHandler(url);
+    }
+
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
         HttpServletRequest request1 = (HttpServletRequest) request;
         HttpServletResponse response1 = (HttpServletResponse) response;
         if (!requiresAuthentication(request1, response1)) {

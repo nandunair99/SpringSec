@@ -44,7 +44,6 @@ public class UserController {
 
         UserDetails userDetails = this.userService.loadUserByUsername(loginDto.getUsername());
         String token = this.jwtUtil.generateToken(userDetails);
-
         return ResponseEntity.ok(new JwtResponseDto(token));
     }
 }
