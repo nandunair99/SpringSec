@@ -8,6 +8,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
+import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -23,7 +25,8 @@ import java.util.Map;
 public class UserAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
     private boolean postOnly = true;
-
+    private SessionAuthenticationStrategy sessionStrategy = new NullAuthenticatedSessionStrategy();
+    private boolean continueChainBeforeSuccessfulAuthentication = false;
     public UserAuthenticationFilter(String defaultFilterProcessesUrl,
                                     AuthenticationManager authenticationManager) {
         super(defaultFilterProcessesUrl, authenticationManager);
@@ -63,20 +66,26 @@ public class UserAuthenticationFilter extends AbstractAuthenticationProcessingFi
             chain.doFilter(request, response);
             return;
         }
-        try {
-            Authentication authenticationResult = attemptAuthentication(request1, response1);
-            if (authenticationResult == null) {
-                // return immediately as subclass has indicated that it hasn't completed
-                return;
+        else {
+            try {
+                Authentication authenticationResult = attemptAuthentication(request1, response1);
+                if (authenticationResult == null) {
+                    // return immediately as subclass has indicated that it hasn't completed
+                    return;
+                }
+                sessionStrategy.onAuthentication(authenticationResult, request1, response1);
+                if (this.continueChainBeforeSuccessfulAuthentication) {
+                    chain.doFilter(request, response);
+                }
+                successfulAuthentication(request1, response1, chain, authenticationResult);
+            } catch (InternalAuthenticationServiceException failed) {
+                this.logger.error("An internal error occurred while trying to authenticate the user.", failed);
+                unsuccessfulAuthentication(request1, response1, failed);
+            } catch (AuthenticationException ex) {
+                // Authentication failed
+                unsuccessfulAuthentication(request1, response1, ex);
             }
-
-            successfulAuthentication(request1, response1, chain, authenticationResult);
-        } catch (InternalAuthenticationServiceException failed) {
-            this.logger.error("An internal error occurred while trying to authenticate the user.", failed);
-            unsuccessfulAuthentication(request1, response1, failed);
-        } catch (AuthenticationException ex) {
-            // Authentication failed
-            unsuccessfulAuthentication(request1, response1, ex);
         }
+
     }
 }
