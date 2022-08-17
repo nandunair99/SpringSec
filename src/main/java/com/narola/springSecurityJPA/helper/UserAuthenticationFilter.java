@@ -1,17 +1,18 @@
 package com.narola.springSecurityJPA.helper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.narola.springSecurityJPA.exception.UserNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
@@ -19,21 +20,20 @@ import java.io.IOException;
 import java.util.Map;
 
 
-public class UserAuthenticationFilter extends OncePerRequestFilter {
+public class UserAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
+    private boolean postOnly = true;
 
-    private static AuthenticationManager authenticationManager;
-
-    public UserAuthenticationFilter(AuthenticationManager authenticationManager)
-    {
-        if(authenticationManager!=null)
-        this.authenticationManager=authenticationManager;
+    public UserAuthenticationFilter(String defaultFilterProcessesUrl,
+                                    AuthenticationManager authenticationManager) {
+        super(defaultFilterProcessesUrl, authenticationManager);
     }
 
-
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
+        if (this.postOnly && !request.getMethod().equals("POST")) {
+            throw new AuthenticationServiceException("Authentication method not supported: " + request.getMethod());
+        }
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         StringBuffer jb = new StringBuffer();
@@ -49,18 +49,34 @@ public class UserAuthenticationFilter extends OncePerRequestFilter {
                 username = map.get("username");
                 password = map.get("password");
 
-            } catch (Exception e) { /*report an error*/ }
+            } catch (Exception e) {
+            }
         }
+        return this.getAuthenticationManager().authenticate(new UsernamePasswordAuthenticationToken(username, password));
+    }
 
-        if(this.authenticationManager!=null)
-        {
-            try {
-                this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-            } catch (UsernameNotFoundException e) {
-                throw new UserNotFoundException(e.getMessage());
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        HttpServletRequest request1 = (HttpServletRequest) request;
+        HttpServletResponse response1 = (HttpServletResponse) response;
+        if (!requiresAuthentication(request1, response1)) {
+            chain.doFilter(request, response);
+            return;
+        }
+        try {
+            Authentication authenticationResult = attemptAuthentication(request1, response1);
+            if (authenticationResult == null) {
+                // return immediately as subclass has indicated that it hasn't completed
+                return;
             }
 
+            successfulAuthentication(request1, response1, chain, authenticationResult);
+        } catch (InternalAuthenticationServiceException failed) {
+            this.logger.error("An internal error occurred while trying to authenticate the user.", failed);
+            unsuccessfulAuthentication(request1, response1, failed);
+        } catch (AuthenticationException ex) {
+            // Authentication failed
+            unsuccessfulAuthentication(request1, response1, ex);
         }
-        filterChain.doFilter(request, response);
     }
 }
