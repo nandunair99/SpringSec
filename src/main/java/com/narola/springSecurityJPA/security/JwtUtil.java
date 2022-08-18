@@ -1,4 +1,4 @@
-package com.narola.springSecurityJPA.helper;
+package com.narola.springSecurityJPA.security;
 
 
 import io.jsonwebtoken.Claims;

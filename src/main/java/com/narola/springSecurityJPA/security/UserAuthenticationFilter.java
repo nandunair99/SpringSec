@@ -1,7 +1,8 @@
-package com.narola.springSecurityJPA.helper;
+package com.narola.springSecurityJPA.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.narola.springSecurityJPA.responsehandler.JsonAuthenticationSuccessHandler;
+import com.narola.springSecurityJPA.service.UserService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -13,7 +14,6 @@ import org.springframework.security.web.authentication.session.NullAuthenticated
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -30,6 +30,7 @@ public class UserAuthenticationFilter extends AbstractAuthenticationProcessingFi
     private boolean postOnly = true;
     private SessionAuthenticationStrategy sessionStrategy = new NullAuthenticatedSessionStrategy();
     private boolean continueChainBeforeSuccessfulAuthentication = false;
+
     public UserAuthenticationFilter(String defaultFilterProcessesUrl,
                                     AuthenticationManager authenticationManager) {
         super(defaultFilterProcessesUrl, authenticationManager);
@@ -40,30 +41,28 @@ public class UserAuthenticationFilter extends AbstractAuthenticationProcessingFi
         if (this.postOnly && !request.getMethod().equals("POST")) {
             throw new AuthenticationServiceException("Authentication method not supported: " + request.getMethod());
         }
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
+        String username = null;
+        String password = null;
         StringBuffer jb = new StringBuffer();
-        if ((username == null) || (password == null)) {
 
-            String line = null;
-            try {
-                BufferedReader reader = request.getReader();
-                while ((line = reader.readLine()) != null)
-                    jb.append(line);
-                ObjectMapper mapper = new ObjectMapper();
-                Map<String, String> map = mapper.readValue(jb.toString(), Map.class);
-                username = map.get("username");
-                password = map.get("password");
+        String line = null;
+        try {
+            BufferedReader reader = request.getReader();
+            while ((line = reader.readLine()) != null)
+                jb.append(line);
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, String> map = mapper.readValue(jb.toString(), Map.class);
+            username = map.get("username");
+            password = map.get("password");
 
-            } catch (Exception e) {
-            }
+        } catch (Exception e) {
+            System.out.println("Something went wrong");
         }
         return this.getAuthenticationManager().authenticate(new UsernamePasswordAuthenticationToken(username, password));
     }
 
-    public JsonAuthenticationSuccessHandler setAuthenticationSuccessUrl(String url)
-    {
-            return new JsonAuthenticationSuccessHandler(url);
+    public void setAuthenticationSuccessUrl(String url, UserService userService) {
+        this.setAuthenticationSuccessHandler(new JsonAuthenticationSuccessHandler(url, userService));
     }
 
     @Override
@@ -74,17 +73,11 @@ public class UserAuthenticationFilter extends AbstractAuthenticationProcessingFi
         if (!requiresAuthentication(request1, response1)) {
             chain.doFilter(request, response);
             return;
-        }
-        else {
+        } else {
             try {
                 Authentication authenticationResult = attemptAuthentication(request1, response1);
                 if (authenticationResult == null) {
-                    // return immediately as subclass has indicated that it hasn't completed
                     return;
-                }
-                sessionStrategy.onAuthentication(authenticationResult, request1, response1);
-                if (this.continueChainBeforeSuccessfulAuthentication) {
-                    chain.doFilter(request, response);
                 }
                 successfulAuthentication(request1, response1, chain, authenticationResult);
             } catch (InternalAuthenticationServiceException failed) {

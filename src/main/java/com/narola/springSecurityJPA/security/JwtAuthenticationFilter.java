@@ -1,4 +1,4 @@
-package com.narola.springSecurityJPA.helper;
+package com.narola.springSecurityJPA.security;
 
 import com.narola.springSecurityJPA.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;

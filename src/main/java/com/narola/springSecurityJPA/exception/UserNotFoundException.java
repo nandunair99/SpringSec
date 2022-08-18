@@ -6,6 +6,7 @@ import java.util.Map;
 
 public class UserNotFoundException extends AuthenticationException {
     private String viewName;
+
     private Map<String, String> errorList;
 
     public String getViewName() {
