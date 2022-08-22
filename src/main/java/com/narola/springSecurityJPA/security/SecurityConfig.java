@@ -5,6 +5,7 @@ import com.narola.springSecurityJPA.responsehandler.JsonAuthenticationSuccessHan
 import com.narola.springSecurityJPA.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -15,8 +16,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver;
 
 @Configuration
 @EnableWebSecurity
@@ -26,8 +30,9 @@ public class SecurityConfig {
 
     @Autowired
     UserService userDetailService;
-//    @Autowired
-//    JsonAuthenticationSuccessHandler jsonAuthenticationSuccessHandler;
+
+    @Autowired
+    DelegatedAuthenticationEntryPoint authEntryPoint;
 
     @Autowired
     JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -58,16 +63,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests((authz) -> authz
                         .mvcMatchers("/login2").permitAll()
                         .anyRequest().authenticated()
-                ).formLogin();
+                )
+                .formLogin();
         UserAuthenticationFilter userAuthenticationFilter = new UserAuthenticationFilter("/login2", authenticationManager);
-
-//        userAuthenticationFilter.setAuthenticationSuccessUrl("/logout",userDetailService);
-//        jsonAuthenticationSuccessHandler.setTargetUrlParameter("targetUrl");
-        userAuthenticationFilter.setAuthenticationSuccessHandler(new JsonAuthenticationSuccessHandler("/register", userDetailService));
-        userAuthenticationFilter.setAuthenticationFailureHandler(new JsonAuthenticationFailureHandler("/errorPage"));
+        userAuthenticationFilter.setAuthenticationSuccessHandler(new JsonAuthenticationSuccessHandler(userDetailService));
+        userAuthenticationFilter.setAuthenticationFailureHandler(new JsonAuthenticationFailureHandler());
         http.addFilterBefore(userAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
+        http.exceptionHandling().authenticationEntryPoint(authEntryPoint);
         return http.build();
 
     }

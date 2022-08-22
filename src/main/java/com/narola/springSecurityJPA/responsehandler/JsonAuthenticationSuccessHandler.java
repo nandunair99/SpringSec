@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class JsonAuthenticationSuccessHandler extends AbstractAuthenticationTargetUrlRequestHandler implements AuthenticationSuccessHandler {
+public class JsonAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
     private UserService userService;
 
@@ -29,27 +29,16 @@ public class JsonAuthenticationSuccessHandler extends AbstractAuthenticationTarg
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public JsonAuthenticationSuccessHandler(String url, UserService userService) {
-        this.setDefaultTargetUrl(url);
-        this.userService = userService;
-    }
-
     public JsonAuthenticationSuccessHandler(UserService userService) {
-        this.setDefaultTargetUrl("/login");
         this.userService = userService;
     }
-
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-
-
         UserDetails userDetails = userService.loadUserByUsername(((User) authentication.getPrincipal()).getUsername());
         String token = jwtUtil.generateToken(userDetails);
         Map<String, String> responseMap = new HashMap<>();
         responseMap.put("token", token);
-        responseMap.put("target", this.determineTargetUrl(request, response));
-
         ResponseVO<Map<String, String>> responseParams = new ResponseVO<>();
         responseParams.setErrorCode(null);
         responseParams.setStatusCode(200);

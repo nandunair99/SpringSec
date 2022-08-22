@@ -61,10 +61,6 @@ public class UserAuthenticationFilter extends AbstractAuthenticationProcessingFi
         return this.getAuthenticationManager().authenticate(new UsernamePasswordAuthenticationToken(username, password));
     }
 
-    public void setAuthenticationSuccessUrl(String url, UserService userService) {
-        this.setAuthenticationSuccessHandler(new JsonAuthenticationSuccessHandler(url, userService));
-    }
-
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);

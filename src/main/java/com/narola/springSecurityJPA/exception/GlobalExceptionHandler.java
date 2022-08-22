@@ -1,13 +1,19 @@
 package com.narola.springSecurityJPA.exception;
 
 
+import com.narola.springSecurityJPA.util.ResponseVO;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -36,4 +42,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return modelAndView;
     }
 
+    @ExceptionHandler({ AuthenticationException.class })
+    @ResponseBody
+    public ResponseEntity<ResponseVO<String>> handleAuthenticationException(Exception ex) {
+
+        ResponseVO<String> responseParams = new ResponseVO<>();
+        responseParams.setErrorCode("Something went wrong");
+        responseParams.setStatusCode(404);
+        responseParams.setMessage("User not authenticated");
+        responseParams.setData("Something went wrong");
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseParams);
+    }
 }

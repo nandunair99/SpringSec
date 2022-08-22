@@ -34,4 +34,11 @@ public class UserController {
     public void generateToken(@RequestBody LoginDto loginDto) {
         System.out.println("Inside login2 api");
     }
+
+    @PostMapping(value = "loginform")
+    public void getLoginForm()
+    {
+        System.out.println("Login page");
+    }
+
 }

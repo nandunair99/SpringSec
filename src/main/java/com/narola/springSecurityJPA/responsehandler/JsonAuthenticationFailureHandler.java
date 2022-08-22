@@ -14,28 +14,16 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class JsonAuthenticationFailureHandler extends AbstractAuthenticationTargetUrlRequestHandler implements AuthenticationFailureHandler {
-
-    public JsonAuthenticationFailureHandler(String url) {
-        this.setDefaultTargetUrl(url);
-    }
-
-    public JsonAuthenticationFailureHandler() {
-        this.setDefaultTargetUrl("/error");
-    }
+public class JsonAuthenticationFailureHandler implements AuthenticationFailureHandler {
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
         Map<String, String> responseMap = new HashMap<>();
-        responseMap.put("target", this.determineTargetUrl(request, response));
-
         ResponseVO<Map<String, String>> responseParams = new ResponseVO<>();
         responseParams.setErrorCode("Something went wrong");
         responseParams.setStatusCode(404);
         responseParams.setMessage("User not authenticated");
         responseParams.setData(responseMap);
-
-        logger.info(responseParams.getErrorCode());
 
         response.resetBuffer();
         response.setStatus(404);
